@@ -2,6 +2,11 @@
 	<head>
 		<script src="raymarcher.js"></script>
 		<script type="text/javascript">
+			
+			function sphereSDF(p) {
+				return p.length() - 0.5;
+			}
+
 			document.addEventListener("DOMContentLoaded", () => {
 				let scene = new Raymarcher.Scene(128, 128);
 				

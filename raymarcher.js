@@ -89,6 +89,7 @@ const Raymarcher = (() => {
 			height - number - the height in pixels of the scene
 			canvas - HTMLCanvasElement - the canvas on which to render
 			ctx - CanvasRenderingContext2D - the 2D rendering context
+			imageData - ImageData - the pixel data for storing pixel calculations and rendering
 			models - Model[] - the models currently in the scene
 		*/
 
@@ -100,8 +101,11 @@ const Raymarcher = (() => {
 		constructor(width, height) {
 			this.width = width;
 			this.height = height;
-			this.canvas = createCanvas(); // TODO
+			this.canvas = document.createElement("canvas");
+			this.canvas.width = width;
+			this.canvas.height = height;
 			this.ctx = this.canvas.getContext('2d');
+			this.imageData = this.ctx.createImageData(width, height);
 			this.models = [];
 		}
 
@@ -132,10 +136,38 @@ const Raymarcher = (() => {
 		}
 
 		/*
+			Calculates the pixel color at the specified x,y position and stores the result in the given color object
+			@param c - {r: number, g: number, b: number} - the object for storing the results
+			@param x - natural number - the x-coordinate of the pixel location to be rendered
+			@param y - natural number - the y-coordinate of the pixel location to be rendered
+		*/
+		calculatePixelColor(c, x, y) {
+			c.r = 255;
+			c.g = 255;
+			c.b = 0;
+		}
+
+		/*
 			Renders the scene to the canvas
 		*/
 		render() {
-			//TODO	
+			let c = {r: 0, g: 0, b: 0}; // the object for storing resulting color values (so a new color object doesn't have to be created for each pixel)
+			for (let y = 0; y < this.height; y++) {
+				for (let x = 0; x < this.width; x++) {
+					let baseIndex = 4*(y*this.width + x);
+
+					this.calculatePixelColor(c, x, y);
+
+					this.imageData.data[baseIndex+0] = c.r;
+					this.imageData.data[baseIndex+1] = c.g;
+					this.imageData.data[baseIndex+2] = c.b;
+					this.imageData.data[baseIndex+3] = 255; // alpha 
+				}
+			}
+
+			this.ctx.putImageData(this.imageData, 0, 0);
+
+			window.requestAnimationFrame(this.render.bind(this));	
 		}
 
 		/*
