@@ -1,0 +1,16 @@
+<html>
+	<head>
+		<script src="raymarcher.js"></script>
+		<script type="text/javascript">
+			document.addEventListener("DOMContentLoaded", () => {
+				let scene = new Raymarcher.Scene(128, 128);
+				
+				let sphere = new Raymarcher.Model(sphereSDF);
+				scene.add(sphere);
+			
+				document.body.appendChild(scene.canvas);	
+				scene.start();
+			});
+		</script>
+	</head>
+</html>
