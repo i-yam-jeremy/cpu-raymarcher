@@ -75,6 +75,14 @@ const Raymarcher = (() => {
 		length() {
 			return Math.sqrt(this.x*this.x + this.y*this.y + this.z*this.z);
 		}
+
+		/*
+			Returns this vector scaled to a length of 1
+			@return Vec3 - the normalized vector
+		*/
+		normalize() {
+			return this.scale(1/this.length());
+		}
 	}
 
 	/*
@@ -90,6 +98,7 @@ const Raymarcher = (() => {
 			canvas - HTMLCanvasElement - the canvas on which to render
 			ctx - CanvasRenderingContext2D - the 2D rendering context
 			imageData - ImageData - the pixel data for storing pixel calculations and rendering
+			cameraPos - Vec3 - the position of the camera for this scene
 			models - Model[] - the models currently in the scene
 		*/
 
@@ -106,6 +115,7 @@ const Raymarcher = (() => {
 			this.canvas.height = height;
 			this.ctx = this.canvas.getContext('2d');
 			this.imageData = this.ctx.createImageData(width, height);
+			this.cameraPos = new Vec3(width/2, height/2, -100);
 			this.models = [];
 		}
 
@@ -142,9 +152,24 @@ const Raymarcher = (() => {
 			@param y - natural number - the y-coordinate of the pixel location to be rendered
 		*/
 		calculatePixelColor(c, x, y) {
+			let p = this.cameraPos;
+			let rayDir = new Vec3(x, y, 0).sub(this.cameraPos).normalize();
+			const maxSteps = 64;
+			const epsilon = 0.01;
+			for (let step = 0; step < maxSteps; step++) {
+				let d = this.models.map((m) => m.distanceTo(p)).reduce(Math.min);
+
+				if (d < epsilon) {
+					c.r = c.g = c.b = (step+1)/maxSteps * 255;
+					return;
+				}
+
+				p = p.add(rayDir.scale(d));
+			}
+
 			c.r = 255;
-			c.g = 255;
-			c.b = 0;
+			c.g = 0;
+			c.b = 255;
 		}
 
 		/*
@@ -199,9 +224,19 @@ const Raymarcher = (() => {
 			this.sdf = sdf;
 			this.position = position || new Vec3(0, 0, 0);
 		}
+
+		/*
+			Returns the shortest distance to the surface of this model from the given point
+			@param p - Vec3 - the point
+			@return number - the distance
+		*/
+		distanceTo(p) {
+			return this.sdf(p.sub(this.position));
+		}
 	}
 
 	return {
+		Vec3,
 		Scene,
 		Model
 	};

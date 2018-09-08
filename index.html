@@ -4,13 +4,13 @@
 		<script type="text/javascript">
 			
 			function sphereSDF(p) {
-				return p.length() - 0.5;
+				return p.length() - 60;
 			}
 
 			document.addEventListener("DOMContentLoaded", () => {
 				let scene = new Raymarcher.Scene(128, 128);
 				
-				let sphere = new Raymarcher.Model(sphereSDF);
+				let sphere = new Raymarcher.Model(sphereSDF, new Raymarcher.Vec3(64, 64, 100));
 				scene.add(sphere);
 			
 				document.body.appendChild(scene.canvas);	
