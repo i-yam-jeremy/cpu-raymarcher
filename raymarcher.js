@@ -83,6 +83,15 @@ const Raymarcher = (() => {
 		normalize() {
 			return this.scale(1/this.length());
 		}
+
+		/*
+			Returns the dot product of the two vectors
+			@param v - Vec3 - the other vector
+			@return number - the dot product of the vectors
+		*/
+		dot(v) {
+			return this.x*v.x + this.y*v.y + this.z*v.z;
+		}
 	}
 
 	/*
@@ -100,6 +109,7 @@ const Raymarcher = (() => {
 			imageData - ImageData - the pixel data for storing pixel calculations and rendering
 			cameraPos - Vec3 - the position of the camera for this scene
 			models - Model[] - the models currently in the scene
+			lights - Light[] - the lights currently in the scene
 		*/
 
 		/*
@@ -117,24 +127,44 @@ const Raymarcher = (() => {
 			this.imageData = this.ctx.createImageData(width, height);
 			this.cameraPos = new Vec3(width/2, height/2, -100);
 			this.models = [];
+			this.lights = [];
 		}
 
 		/*
-			Adds the given model to the scene
-			@param model - Model - the model to add
+			Adds the given model or light to the scene
+			@param obj - Model|Light - the model or light to add
 		*/
-		add(model) {
-			this.models.push(model);
+		add(obj) {
+			if (obj instanceof Model) {
+				this.models.push(obj);
+			}
+			else if (obj instanceof Light) {
+				this.lights.push(obj);
+			}
+			else {
+				throw "Object is not a Model or a Light";
+			}
 		}
 
 		/*
-			Removes the given model from the scene
-			@param model - Model - the model to remove
+			Removes the given model or light from the scene
+			@param obj - Model|Light - the model or light to remove
 		*/
-		remove(model) {
-			let index = this.models.indexOf(model);
+		remove(obj) {
+			let array;
+			if (obj instanceof Model) {
+				array = this.models;
+			}
+			else if (obj instanceof Light) {
+				array = this.lights;
+			}
+			else {
+				throw "Object is not a Model or a Light";
+			}
+			
+			let index = array.indexOf(obj);
 			if (index != -1) {
-				this.models.splice(index, 1);
+				array.splice(index, 1);
 			}
 		}
 
@@ -147,45 +177,65 @@ const Raymarcher = (() => {
 
 		/*
 			Calculates the pixel color at the specified x,y position and stores the result in the given color object
-			@param c - {r: number, g: number, b: number} - the object for storing the results
 			@param x - natural number - the x-coordinate of the pixel location to be rendered
 			@param y - natural number - the y-coordinate of the pixel location to be rendered
+			@return Vec3 - the color of the shaded pixel (RGB values from 0 to 1)
 		*/
-		calculatePixelColor(c, x, y) {
+		calculatePixelColor(x, y) {
 			let p = this.cameraPos;
 			let rayDir = new Vec3(x, y, 0).sub(this.cameraPos).normalize();
 			const maxSteps = 64;
 			const epsilon = 0.01;
 			for (let step = 0; step < maxSteps; step++) {
-				let d = this.models.map((m) => m.distanceTo(p)).reduce(Math.min);
+				let modelDistances = this.models.map((m) => {
+					return {model: m, distance: m.distanceTo(p)};
+				});
+				let modelDistance = modelDistances.reduce((a, b) => {
+					if (a.distance < b.distance) {
+						return a;
+					}
+					else {
+						return b;
+					}
+				});
 
-				if (d < epsilon) {
-					c.r = c.g = c.b = (step+1)/maxSteps * 255;
-					return;
+				if (modelDistance.distance < epsilon) {
+					let h = 0.001; // approximate gradient with limit as h goes to zero (sufficiently small h)
+					let d = modelDistance.distance; // the base distance
+					let m = modelDistance.model; // the model
+					let normal = new Vec3(
+						(m.distanceTo(p.add(new Vec3(h, 0, 0))) - d) / h,
+						(m.distanceTo(p.add(new Vec3(0, h, 0))) - d) / h,
+						(m.distanceTo(p.add(new Vec3(0, 0, h))) - d) / h
+					).normalize();
+
+					let c = new Vec3(0, 0, 0);
+					for (let light of this.lights) {
+						let lightingColor = m.shade(light, normal, p);
+						c = c.add(lightingColor);
+					}
+					return c;
 				}
 
-				p = p.add(rayDir.scale(d));
+				p = p.add(rayDir.scale(modelDistance.distance));
 			}
 
-			c.r = 255;
-			c.g = 0;
-			c.b = 255;
+			return new Vec3(1, 0, 1); // background color
 		}
 
 		/*
 			Renders the scene to the canvas
 		*/
 		render() {
-			let c = {r: 0, g: 0, b: 0}; // the object for storing resulting color values (so a new color object doesn't have to be created for each pixel)
 			for (let y = 0; y < this.height; y++) {
 				for (let x = 0; x < this.width; x++) {
 					let baseIndex = 4*(y*this.width + x);
 
-					this.calculatePixelColor(c, x, y);
-
-					this.imageData.data[baseIndex+0] = c.r;
-					this.imageData.data[baseIndex+1] = c.g;
-					this.imageData.data[baseIndex+2] = c.b;
+					let c = this.calculatePixelColor(x, y);
+					
+					this.imageData.data[baseIndex+0] = c.x*255;
+					this.imageData.data[baseIndex+1] = c.y*255;
+					this.imageData.data[baseIndex+2] = c.z*255;
 					this.imageData.data[baseIndex+3] = 255; // alpha 
 				}
 			}
@@ -212,16 +262,19 @@ const Raymarcher = (() => {
 			Fields:
 
 			sdf - (Vec3) => number - a function that takes a point and returns the shortest distance to the surface of the model
+			shader - (Vec3) => Vec3 - a function that takes a point on the surface of the model and returns the shaded color value
 			position - Vec3 - the position of this model
 		*/
 
 		/*
 			Creates a model from the given sdf and optional position
 			@param sdf - (Vec3) => number - a function that takes a point and returns the shortest distance to the surface of the model
+			@param shader - (Vec3) => Vec3 - a function that takes a point on the surface of the model and returns the shaded color value
 			@param position - Vec3 (Optional) - the position of the object if specified, otherwise the origin (0, 0, 0)
 		*/
-		constructor(sdf, position) {
+		constructor(sdf, shader, position) {
 			this.sdf = sdf;
+			this.shader = shader;
 			this.position = position || new Vec3(0, 0, 0);
 		}
 
@@ -233,12 +286,52 @@ const Raymarcher = (() => {
 		distanceTo(p) {
 			return this.sdf(p.sub(this.position));
 		}
+
+		/*
+			Calculates the shaded color value from the given light on this model at the given point on the surface of the model
+			@param light - Light - the light
+			@param normal - Vec3 - the normal vector of the surface of the model
+			@param p - Vec3 - the point to be shaded
+			@return Vec3 - the shaded color (RGB values from 0 to 1)
+		*/
+		shade(light, normal, p) {
+			return this.shader(light, normal, p.sub(this.position));
+		}
+		
+	}
+
+	/*
+		A point light
+	*/
+	class Light {
+
+		/*
+			Fields:
+
+			color - Vec3 - the color of the light (RGB values from 0 to 1)
+			intensity - number - the intensity of the light (from 0 to 1), 1 being the brightest possible, and 0 being completely dark
+			position - Vec3 - the position of this light
+			
+		*/
+
+		/*
+			Creates a light from the given data
+			@param color - Vec3 - the color of the light (RGB values from 0 to 1)
+			@param intensity - number - the intensity of the light (from 0 to 1), 1 being the brightest possible, and 0 being completely dark
+			@param position - Vec3 - the position of this light	
+		*/
+		constructor(color, intensity, position) {
+			this.color = color;
+			this.intensity = intensity;
+			this.position = position || new Vec3(0, 0, 0);
+		}
 	}
 
 	return {
 		Vec3,
 		Scene,
-		Model
+		Model,
+		Light
 	};
 
 })();

@@ -7,11 +7,23 @@
 				return p.length() - 60;
 			}
 
+			function shadeSphere(light, normal, p) {
+				let color = new Raymarcher.Vec3(0.75, 0.75, 0.75);
+				let ambient = color;
+				let lightDir = light.position.sub(p).scale(-1).normalize();
+				let brightness = lightDir.dot(normal)*light.intensity;
+				let lightShadingColor = light.color.scale(brightness);
+				let diffuse = color.scale(lightShadingColor);
+				return diffuse.scale(0.8).add(ambient.scale(0.2));
+			}
+
 			document.addEventListener("DOMContentLoaded", () => {
 				let scene = new Raymarcher.Scene(128, 128);
 				
-				let sphere = new Raymarcher.Model(sphereSDF, new Raymarcher.Vec3(64, 64, 100));
+				let sphere = new Raymarcher.Model(sphereSDF, shadeSphere, new Raymarcher.Vec3(64, 64, 100));
 				scene.add(sphere);
+
+				scene.add(new Raymarcher.Light(new Raymarcher.Vec3(1, 1, 1), 0.75, new Raymarcher.Vec3(64, 64, 0)));
 			
 				document.body.appendChild(scene.canvas);	
 				scene.start();
