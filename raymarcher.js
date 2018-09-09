@@ -125,7 +125,7 @@ const Raymarcher = (() => {
 			this.canvas.height = height;
 			this.ctx = this.canvas.getContext('2d');
 			this.imageData = this.ctx.createImageData(width, height);
-			this.cameraPos = new Vec3(width/2, height/2, -100);
+			this.cameraPos = new Vec3(0, 0, -4);
 			this.models = [];
 			this.lights = [];
 		}
@@ -183,7 +183,14 @@ const Raymarcher = (() => {
 		*/
 		calculatePixelColor(x, y) {
 			let p = this.cameraPos;
-			let rayDir = new Vec3(x, y, 0).sub(this.cameraPos).normalize();
+			let pointOnScreen = new Vec3(x, y, 0);
+			/* 
+				Scale factor for normalizing UV coordinates to interval [-1, 1] 
+				(in y-axis and proportionallly scaled in x-axis so stretching doesn't occur with different aspect ratio)
+			*/
+			let scaleFactor = -1*2*(1/this.height);
+			let uv = pointOnScreen.sub(new Vec3(1/2*this.width, 1/2*this.height, 0)).scale(scaleFactor);
+			let rayDir = uv.sub(this.cameraPos).normalize();
 			const maxSteps = 64;
 			const epsilon = 0.01;
 			for (let step = 0; step < maxSteps; step++) {

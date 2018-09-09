@@ -8,7 +8,7 @@
 		<script type="text/javascript">
 			
 			function sphereSDF(p) {
-				return p.length() - 60;
+				return p.length() - 0.75;
 			}
 
 			function shadeSphere(light, normal, p) {
@@ -24,10 +24,10 @@
 			function createScene(size) {
 				let scene = new Raymarcher.Scene(size, size);
 				
-				let sphere = new Raymarcher.Model(sphereSDF, shadeSphere, new Raymarcher.Vec3(size/2, size/2, 100));
+				let sphere = new Raymarcher.Model(sphereSDF, shadeSphere, new Raymarcher.Vec3(0, 0, 1));
 				scene.add(sphere);
 
-				scene.add(new Raymarcher.Light(new Raymarcher.Vec3(1, 1, 1), 0.75, new Raymarcher.Vec3(size/2, size/2, 0)));
+				scene.add(new Raymarcher.Light(new Raymarcher.Vec3(1, 1, 1), 0.75, new Raymarcher.Vec3(1, 1, 0)));
 			
 				document.getElementById("scene-frame").appendChild(scene.canvas);	
 				scene.start();
@@ -78,8 +78,8 @@
 				<div class="col-md-4"></div>
 				<div class="col-md-4">
 					<ul class="nav nav-tabs">
-						<li class="active" id="64x64-li"><a id="64x64" href="#">64x64</a></li>
-						<li id="128x128-li"><a id="128x128" href="#">128x128</a></li>
+						<li id="64x64-li"><a id="64x64" href="#">64x64</a></li>
+						<li class="active" id="128x128-li"><a id="128x128" href="#">128x128</a></li>
 						<li id="256x256-li"><a id="256x256" href="#">256x256</a></li>
 					</ul>
 					<div id="scene-frame"></div>
