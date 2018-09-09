@@ -1,6 +1,10 @@
 <html>
 	<head>
 		<script src="raymarcher.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>	
 		<script type="text/javascript">
 			
 			function sphereSDF(p) {
@@ -17,17 +21,70 @@
 				return diffuse.scale(0.8).add(ambient.scale(0.2));
 			}
 
-			document.addEventListener("DOMContentLoaded", () => {
-				let scene = new Raymarcher.Scene(128, 128);
+			function createScene(size) {
+				let scene = new Raymarcher.Scene(size, size);
 				
-				let sphere = new Raymarcher.Model(sphereSDF, shadeSphere, new Raymarcher.Vec3(64, 64, 100));
+				let sphere = new Raymarcher.Model(sphereSDF, shadeSphere, new Raymarcher.Vec3(size/2, size/2, 100));
 				scene.add(sphere);
 
-				scene.add(new Raymarcher.Light(new Raymarcher.Vec3(1, 1, 1), 0.75, new Raymarcher.Vec3(64, 64, 0)));
+				scene.add(new Raymarcher.Light(new Raymarcher.Vec3(1, 1, 1), 0.75, new Raymarcher.Vec3(size/2, size/2, 0)));
 			
-				document.body.appendChild(scene.canvas);	
+				document.getElementById("scene-frame").appendChild(scene.canvas);	
 				scene.start();
+			}
+
+			document.addEventListener("DOMContentLoaded", () => {
+
+				$("#64x64").click((e) => {
+					e.preventDefault();
+					$("#64x64-li").addClass('active');
+					$("#128x128-li").removeClass('active');
+					$("#256x256-li").removeClass('active');
+					$("#scene-frame").empty(); // remove previous canvas 
+					createScene(64);
+				});
+
+				$("#128x128").click((e) => {
+					e.preventDefault();
+					$("#64x64-li").removeClass('active');
+					$("#128x128-li").addClass('active');
+					$("#256x256-li").removeClass('active');
+					$("#scene-frame").empty(); // remove previous canvas 
+					createScene(128);
+				});
+	
+				$("#256x256").click((e) => {
+					e.preventDefault();
+					$("#64x64-li").removeClass('active');
+					$("#128x128-li").removeClass('active');
+					$("#256x256-li").addClass('active');
+					$("#scene-frame").empty(); // remove previous canvas 
+					createScene(256);
+				});
+	
+				createScene(128);
 			});
 		</script>
 	</head>
+	<body>
+		<div class="row" style="padding: 10px">
+			<div class="col-sm-10"></div>
+			<div class="col-sm-2">
+				<a href="https://github.com/i-yam-jeremy/cpu-raymarcher" class="btn btn-default">View on GitHub</a>
+			</div>	
+		</div>
+		<div class="container" style="padding: 10px; background-color: #CCCCCC">
+			<div class="row">
+				<div class="col-md-4"></div>
+				<div class="col-md-4">
+					<ul class="nav nav-tabs">
+						<li class="active" id="64x64-li"><a id="64x64" href="#">64x64</a></li>
+						<li id="128x128-li"><a id="128x128" href="#">128x128</a></li>
+						<li id="256x256-li"><a id="256x256" href="#">256x256</a></li>
+					</ul>
+					<div id="scene-frame"></div>
+				</div>
+				<div class="col-md-4"></div>
+		</div>
+	</body>
 </html>
