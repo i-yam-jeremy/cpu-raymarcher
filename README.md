@@ -1,5 +1,5 @@
 # CPU Raymarcher
-A CPU raymarcher that can render arbitrary SDFs
+A CPU-based implementation of a raymarcher. This version is very slow but is potentially more readable to those familiar with JavaScript and not familiar with GLSL. The GPU-based version can be found [here](https://github.com/i-yam-jeremy/gpu-raymarcher).
 
 ## Raymarching
 Raymarching is a rendering technique similar to raytracing, in which rays are calculated from the camera through the pixels screen and onto objects on the scene. When the rays hit an object the ray stops and various lighting and rendering calculations are done (normal calculation, Phong lighting, reflection, refraction, etc.). Raytracing uses pre-solved equations to calculate intersection points based on the ray and objects in the scene. This limits raytracing to using a small variety of primitive objects such as spheres and tori. This is very limiting. Raymarching solves this by marching along the ray instead of finding the intersection point in one step. This has a performance impact but allows raymarching to render objects solely based on a signed-distance field without needing the equation to be solveable.
