@@ -119,6 +119,11 @@ const Raymarcher = (() => {
 			cameraPos - Vec3 - the position of the camera for this scene
 			models - Model[] - the models currently in the scene
 			lights - Light[] - the lights currently in the scene
+			updateFunc - (number) => void - called at the specified tick rate, used to update models for animations
+				the number parameter is the time in seconds since the last time updateFunc was called
+			updateTickRate - number - how many times updateFunc should be called per second (can be greater than 60)
+			updateAccumulator - number - the number of seconds of updates queued (if greater than 1/updateTickRate when render is called, updateFunc will be called, possibly multiple times)
+			lastRenderTime - integer - the time in milliseconds since render was last called
 		*/
 
 		/*
@@ -137,6 +142,7 @@ const Raymarcher = (() => {
 			this.cameraPos = new Vec3(0, 0, -4);
 			this.models = [];
 			this.lights = [];
+			this.updateAccumulator = 0;
 		}
 
 		/*
@@ -243,6 +249,14 @@ const Raymarcher = (() => {
 			Renders the scene to the canvas
 		*/
 		render() {
+			let secondsElapsed = (Date.now() - this.lastRenderTime) / 1000;
+			this.lastRenderTime = Date.now();
+			this.updateAccumulator += secondsElapsed;
+			while (this.updateAccumulator > 1/this.updateTickRate) {
+				this.updateFunc(1/this.updateTickRate);
+				this.updateAccumulator -= 1/this.updateTickRate;
+			}
+
 			for (let y = 0; y < this.height; y++) {
 				for (let x = 0; x < this.width; x++) {
 					let baseIndex = 4*(y*this.width + x);
@@ -263,8 +277,14 @@ const Raymarcher = (() => {
 
 		/*
 			Starts the render loop
+			@param updateFunc - (number) => void - called at the specified tick rate, used to update models for animations
+				the number parameter is the time in seconds since the last time updateFunc was called
+			@param updateTickRate - number - how many times updateFunc should be called per second (can be greater than 60)
 		*/
-		start() {
+		start(updateFunc, updateTickRate) {
+			this.updateFunc = updateFunc || ((dt) => {});
+			this.updateTickRate = updateTickRate || 30;
+			this.lastRenderTime = Date.now();
 			window.requestAnimationFrame(this.render.bind(this));
 		}
 	}

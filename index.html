@@ -18,14 +18,17 @@
 				height = height || width; // if only one dimension is specified it is square
 				let scene = new Raymarcher.Scene(width, height);
 				
-				let sphere = new Raymarcher.Model(modelSDF, Raymarcher.Shaders.Lambert(new Raymarcher.Vec3(0.75, 0.75, 0.75)), new Raymarcher.Vec3(0, 0, 1));
-				scene.add(sphere);
+				let model = new Raymarcher.Model(modelSDF, Raymarcher.Shaders.Lambert(new Raymarcher.Vec3(0.75, 0.75, 0.75)), new Raymarcher.Vec3(0, 0, 1));
+				scene.add(model);
 
 				scene.add(new Raymarcher.Light(new Raymarcher.Vec3(1, 1, 1), 0.1, new Raymarcher.Vec3(1, 1, 0)));
 				scene.add(new Raymarcher.Light(new Raymarcher.Vec3(0, 1, 0), 0.5, new Raymarcher.Vec3(-1, -1, 0)));		
 	
 				document.getElementById("scene-frame").appendChild(scene.canvas);	
-				scene.start();
+				scene.start((dt) => {
+					console.log("Update");
+					model.position = model.position.add(new Raymarcher.Vec3(0.001, 0, 0));		
+				}, 60);
 			}
 
 			function warn(width, height) {
