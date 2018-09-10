@@ -92,6 +92,15 @@ const Raymarcher = (() => {
 		dot(v) {
 			return this.x*v.x + this.y*v.y + this.z*v.z;
 		}
+
+		/*
+			Applies a scalar function to each component of this vector and returns the result
+			@param f - (number) => number - a scalar function
+			@return Vec3 - the resultant vector
+		*/
+		apply(f) {
+			return new Vec3(f(this.x), f(this.y), f(this.z));
+		}
 	}
 
 	/*
@@ -227,7 +236,7 @@ const Raymarcher = (() => {
 				p = p.add(rayDir.scale(modelDistance.distance));
 			}
 
-			return new Vec3(1, 0, 1); // background color
+			return new Vec3(0, 0, 0); // background color
 		}
 
 		/*
@@ -334,11 +343,66 @@ const Raymarcher = (() => {
 		}
 	}
 
+	/*
+		A collection of primitive model SDFs for ease of use
+	*/
+	const Primitives = (() => {
+
+		/*
+			The SDF for a sphere with the given radius
+			@param p - Vec3 - the point to calculate the distance from
+			@param radius - number - the radius of the sphere
+			@return number - the shortest distance from the given point to the surface of the sphere
+		*/
+		function Sphere(p, radius) {
+			return p.length() - radius;
+		}
+
+		return {
+			Sphere
+		};
+
+	})();
+
+	/*
+		A collection of commonly used shaders for ease of use
+	*/
+	const Shaders = (() => {
+
+		/*
+			A shader with the lambertian reflectance model
+			@param color - Vec3 - the color of the object to be shaded
+			@param diffuseWeight - number (default=0.8) - the amount of diffuse lighting to add
+			@param ambientWeight - number (default=0.2) - the amount of ambient lighting to add
+			Note: for best results ensure diffuseWeight+ambientWeight=1.0
+			@return (Vec3, Vec3, Vec3) => Vec3 - a shader function with the specified parameters
+		*/
+		function Lambert(color, diffuseWeight, ambientWeight) {
+			diffuseWeight = diffuseWeight || 0.8;
+			ambientWeight = ambientWeight || 0.2;
+			return (light, normal, p) => {
+				let ambient = color;
+				let lightDir = light.position.sub(p).scale(-1).normalize();
+				let brightness = lightDir.dot(normal)*light.intensity;
+				let lightShadingColor = light.color.scale(brightness);
+				let diffuse = color.scale(lightShadingColor).apply(c => Math.max(c, 0));
+				return diffuse.scale(diffuseWeight).add(ambient.scale(ambientWeight));
+			};
+		}
+
+		return {
+			Lambert
+		};
+
+	})();
+
 	return {
 		Vec3,
 		Scene,
 		Model,
-		Light
+		Light,
+		Primitives,
+		Shaders
 	};
 
 })();

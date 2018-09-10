@@ -5,32 +5,43 @@
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>	
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js"></script>
 		<script type="text/javascript">
 			
-			function sphereSDF(p) {
-				return p.length() - 0.75;
+			function modelSDF(p) {
+				let d1 = Raymarcher.Primitives.Sphere(p, 0.75);
+				let d2 = 0.1*Math.sin(20*p.x)*Math.sin(20*p.y)*Math.sin(20*p.z);
+				return d1+d2;
 			}
 
-			function shadeSphere(light, normal, p) {
-				let color = new Raymarcher.Vec3(0.75, 0.75, 0.75);
-				let ambient = color;
-				let lightDir = light.position.sub(p).scale(-1).normalize();
-				let brightness = lightDir.dot(normal)*light.intensity;
-				let lightShadingColor = light.color.scale(brightness);
-				let diffuse = color.scale(lightShadingColor);
-				return diffuse.scale(0.8).add(ambient.scale(0.2));
-			}
-
-			function createScene(size) {
-				let scene = new Raymarcher.Scene(size, size);
+			function createScene(width, height) {
+				height = height || width; // if only one dimension is specified it is square
+				let scene = new Raymarcher.Scene(width, height);
 				
-				let sphere = new Raymarcher.Model(sphereSDF, shadeSphere, new Raymarcher.Vec3(0, 0, 1));
+				let sphere = new Raymarcher.Model(modelSDF, Raymarcher.Shaders.Lambert(new Raymarcher.Vec3(0.75, 0.75, 0.75)), new Raymarcher.Vec3(0, 0, 1));
 				scene.add(sphere);
 
-				scene.add(new Raymarcher.Light(new Raymarcher.Vec3(1, 1, 1), 0.75, new Raymarcher.Vec3(1, 1, 0)));
-			
+				scene.add(new Raymarcher.Light(new Raymarcher.Vec3(1, 1, 1), 0.1, new Raymarcher.Vec3(1, 1, 0)));
+				scene.add(new Raymarcher.Light(new Raymarcher.Vec3(0, 1, 0), 0.5, new Raymarcher.Vec3(-1, -1, 0)));		
+	
 				document.getElementById("scene-frame").appendChild(scene.canvas);	
 				scene.start();
+			}
+
+			function warn(width, height) {
+				height = height || width; // if only one dimension is specified it is square
+				bootbox.confirm("<p><b style=\"color: red; font-size: 24px;\">Rendering at higher resolutions can cause your computer to freeze. Proceed at your own risk.</b></p> This example only uses the CPU so if your computer is older it may not handle this well. Click the \"Cancel\" or close this page if you have tabs open that are important in case the browser freezes. Modern computers should be fine but it's better to be safe and close all important work first.", (result) => {
+					if (result) {
+						$("#64x64-li").removeClass('active');
+						$("#128x128-li").removeClass('active');
+						$("#256x256-li").removeClass('active');
+						$("#512x512-li").removeClass('active');
+						$("#400x300-li").removeClass('active');
+						$("#" + width + "x" + height + "-li").addClass('active');
+						$("#scene-frame").empty(); // remove previous canvas 
+						createScene(width, height);
+					}
+				});
 			}
 
 			document.addEventListener("DOMContentLoaded", () => {
@@ -55,11 +66,17 @@
 	
 				$("#256x256").click((e) => {
 					e.preventDefault();
-					$("#64x64-li").removeClass('active');
-					$("#128x128-li").removeClass('active');
-					$("#256x256-li").addClass('active');
-					$("#scene-frame").empty(); // remove previous canvas 
-					createScene(256);
+					warn(256);
+				});
+				
+				$("#512x512").click((e) => {
+					e.preventDefault();
+					warn(512);
+				});
+				
+				$("#400x300").click((e) => {
+					e.preventDefault();
+					warn(400, 300);
 				});
 	
 				createScene(128);
@@ -75,16 +92,18 @@
 		</div>
 		<div class="container" style="padding: 10px; background-color: #CCCCCC">
 			<div class="row">
-				<div class="col-md-4"></div>
-				<div class="col-md-4">
+				<div class="col-md-3"></div>
+				<div class="col-md-6">
 					<ul class="nav nav-tabs">
 						<li id="64x64-li"><a id="64x64" href="#">64x64</a></li>
 						<li class="active" id="128x128-li"><a id="128x128" href="#">128x128</a></li>
 						<li id="256x256-li"><a id="256x256" href="#">256x256</a></li>
+						<li id="512x512-li"><a id="512x512" href="#">512x512</a></li>
+						<li id="400x300-li"><a id="400x300" href="#">400x300</a></li>
 					</ul>
 					<div id="scene-frame"></div>
 				</div>
-				<div class="col-md-4"></div>
+				<div class="col-md-3"></div>
 		</div>
 	</body>
 </html>
