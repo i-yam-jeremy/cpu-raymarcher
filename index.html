@@ -1,5 +1,6 @@
 <html>
 	<head>
+		<title>CPU Raymarcher</title>
 		<script src="raymarcher.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -8,7 +9,7 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js"></script>
 		<script type="text/javascript">
 		
-			let t = 0.0;	
+			let t = 0.0;
 			function modelSDF(p) {
 				let d1 = Raymarcher.Primitives.Sphere(p, 0.75);
 				let distortionAmplitude = 0.1*(0.5*Math.sin(t)+0.5);
@@ -98,6 +99,10 @@
 			<div class="row">
 				<div class="col-md-3"></div>
 				<div class="col-md-6">
+					<div class="jumbotron">
+						<h2>CPU Raymarcher Demo</h2>
+						This is a simple demo of my CPU-based raymarcher. You can find the GPU-based version <a href="https://github.com/i-yam-jeremy/gpu-raymarcher">here</a>.
+					</div>
 					<ul class="nav nav-tabs">
 						<li id="64x64-li"><a id="64x64" href="#">64x64</a></li>
 						<li class="active" id="128x128-li"><a id="128x128" href="#">128x128</a></li>
