@@ -242,7 +242,7 @@ const Raymarcher = (() => {
 				p = p.add(rayDir.scale(modelDistance.distance));
 			}
 
-			return new Vec3(0, 0, 0); // background color
+			return new Vec3(1, 1, 1); // background color
 		}
 
 		/*
